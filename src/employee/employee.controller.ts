@@ -1,80 +1,100 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
   Body,
-  Param,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
-  UsePipes,
-  ValidationPipe,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { Employee } from '../db/entities/EmployeeEntity';
-import { EmployeeService } from './employee.service';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe.js';
+import { CreateEmployeeDto } from './dto/create-employee.dto.js';
+import { EmployeeQueryDto } from './dto/employee-query.dto.js';
+import {
+  EmployeeResponseDto,
+  PaginatedEmployeesResponseDto,
+} from './dto/employee-response.dto.js';
+import { UpdateEmployeeDto } from './dto/update-employee.dto.js';
+import { EmployeeService } from './employee.service.js';
 
-import { Query as ExpressQuery } from 'express-serve-static-core';
-import { ApiBadRequestResponse, ApiCreatedResponse } from '@nestjs/swagger';
-import { CreateEmployeeDto } from './dto/CreateEmployee.dto';
-import { UpdateEmployeeDto } from './dto/UpdateEmployee.dto';
-import { EmployeesResponseDto } from './dto/EmployeeResponse.dto';
-
-@Controller('employee')
+@ApiTags('employees')
+@Controller('employees')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
-  @HttpCode(201)
-  @UsePipes(ValidationPipe)
-  @ApiCreatedResponse({
-    description: 'User created successfully',
-    type: Employee,
+  @ApiOperation({ summary: 'Create an employee' })
+  @ApiCreatedResponse({ type: EmployeeResponseDto })
+  @ApiBadRequestResponse({ description: 'Request validation failed' })
+  @ApiConflictResponse({
+    description: 'An employee with this email already exists',
   })
-  @ApiBadRequestResponse({
-    description: 'User cannot be created. Try again!'
-  })
-  async create(@Body() employee: CreateEmployeeDto) {
-    await this.employeeService.create(employee);
+  create(@Body() input: CreateEmployeeDto): Promise<EmployeeResponseDto> {
+    return this.employeeService.create(input);
   }
 
-  
   @Get()
-  findAll(@Query() query: ExpressQuery): Promise<EmployeesResponseDto[]> {
-    return this.employeeService.findActiveEmployees(query);
-  }
-
-  @Get('deleted')
-  findDeletedEmloyees(@Query() query: ExpressQuery): Promise<EmployeesResponseDto[]> {
-    return this.employeeService.findDeletedEmployees(query);
+  @ApiOperation({ summary: 'List, filter, search and sort employees' })
+  @ApiOkResponse({ type: PaginatedEmployeesResponseDto })
+  findAll(
+    @Query() query: EmployeeQueryDto,
+  ): Promise<PaginatedEmployeesResponseDto> {
+    return this.employeeService.findAll(query);
   }
 
   @Get(':id')
-  findeOne(@Param('id') id: string): Promise<EmployeesResponseDto> {
+  @ApiOperation({ summary: 'Get an employee by id' })
+  @ApiOkResponse({ type: EmployeeResponseDto })
+  @ApiNotFoundResponse({ description: 'Employee was not found' })
+  findOne(
+    @Param('id', ParseObjectIdPipe) id: string,
+  ): Promise<EmployeeResponseDto> {
     return this.employeeService.findOne(id);
   }
 
-  @Put(':id')
-  @ApiCreatedResponse({
-    description: 'User updated successfully'
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update an employee' })
+  @ApiOkResponse({ type: EmployeeResponseDto })
+  @ApiNotFoundResponse({ description: 'Employee was not found' })
+  @ApiConflictResponse({
+    description: 'An employee with this email already exists',
   })
-  @ApiBadRequestResponse({
-    description: 'User cannot be updated. Try again!'
-  })
-  async update(@Param('id') id: string, @Body() employee: UpdateEmployeeDto): Promise<any> {
-    await this.employeeService.update(id, employee);
+  update(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() input: UpdateEmployeeDto,
+  ): Promise<EmployeeResponseDto> {
+    return this.employeeService.update(id, input);
   }
 
   @Delete(':id')
-  @ApiCreatedResponse({
-    description: 'User deleted successfully',
-    })
-  @ApiBadRequestResponse({
-    description: 'User cannot be deleted. Try again!'
-  })
-  async delete(@Param('id') id: string) {
-    await this.employeeService.delete(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft-delete an employee' })
+  @ApiNoContentResponse({ description: 'Employee was marked as inactive' })
+  @ApiNotFoundResponse({ description: 'Active employee was not found' })
+  async remove(@Param('id', ParseObjectIdPipe) id: string): Promise<void> {
+    await this.employeeService.remove(id);
   }
 
-
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore a soft-deleted employee' })
+  @ApiOkResponse({ type: EmployeeResponseDto })
+  @ApiNotFoundResponse({ description: 'Inactive employee was not found' })
+  restore(
+    @Param('id', ParseObjectIdPipe) id: string,
+  ): Promise<EmployeeResponseDto> {
+    return this.employeeService.restore(id);
+  }
 }

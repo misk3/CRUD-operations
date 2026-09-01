@@ -1,7 +1,10 @@
 # compiled output
 /dist
 /node_modules
-.*
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
 
 # Logs
 logs
@@ -18,6 +21,7 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+.eslintcache
 
 # IDEs and editors
 /.idea
