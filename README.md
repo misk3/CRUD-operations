@@ -15,10 +15,8 @@ Features
 - local Docker Compose setup
 
 Stack: Node.js and TypeScript, NestJS, MongoDB and Mongoose
+
 - class-validator and class-transformer
 - Swagger/OpenAPI
 - Jest and Supertest
 - Docker and GitHub Actions
-
-
-
