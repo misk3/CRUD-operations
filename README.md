@@ -13,6 +13,7 @@ Features
 - health endpoint with database connectivity check
 - unit and HTTP validation tests
 - local Docker Compose setup
+- security headers (helmet), configurable CORS allowlist, and global rate limiting
 
 Stack: Node.js and TypeScript, NestJS, MongoDB and Mongoose
 
@@ -20,3 +21,4 @@ Stack: Node.js and TypeScript, NestJS, MongoDB and Mongoose
 - Swagger/OpenAPI
 - Jest and Supertest
 - Docker and GitHub Actions
+- helmet and @nestjs/throttler
